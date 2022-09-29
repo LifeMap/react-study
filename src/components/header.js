@@ -1,60 +1,78 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { getAuthToken, getRefreshToken } from '../storages/Cookie';
+import { useSetRecoilState } from "recoil";
 import { Link } from 'react-router-dom';
+import axios from "axios";
 
 function Header() {
 
-    console.log(`Header...${localStorage.getItem('auth_token')}`);
+    console.log(`Header...${getAuthToken()}`);
+
+    const [authToken, setAuthToken] = useState(getAuthToken);
+    const [refreshToken, setRefreshToken] = useState(getRefreshToken);
+    const [user, setUser] = useState(sessionStorage.getItem('user'));
 
     const [menu, setMenu] = useState();
+    const [menuHome, setMenuHome] = useState();
+    const [subMenus, setSubMenus] = useState();
 
+    // 페이지 렌더링 후 가장 처음 호출되는 함수
     useEffect(() => {
-        if (sessionStorage.getItem('menu')) {
-            setMenu(sessionStorage.getItem('menu'));
-        } else {
-            axios.get('http://localhost:9000/api/v1/menu', 
-                {
-                    headers: {
-                        auth_token: localStorage.getItem('auth_token')
+        console.log('EFFECT...');
+
+        async function fetchData() {
+            if (sessionStorage.getItem('menu')) {
+                setMenu(JSON.parse(sessionStorage.getItem('menu')));
+            } else {
+                const result = await axios.get('http://localhost:9000/api/v1/menu',
+                    {
+                        headers: {
+                            auth_token: authToken
+                        }
                     }
-                }
-            )
-            .then(res => {
-                setMenu(res.data);
-            })
-            .catch(err => {
-                alert(`${JSON.stringify(err)}`);
-            });
+                );
+                setMenu(result.data);
+                // sessionStorage.setItem('menu', result.data);
+                // console.log(`menu result : ${JSON.parse(sessionStorage.getItem('menu'))}`);
+            }
         }
-    }, []);
+        fetchData();
 
-    const menuHome = menu && menu.data[0];
-    console.log(`menuHome: ${JSON.stringify(menuHome)}`);
-    // console.log(`menuHome.link_url: ${menuHome.link_url}`);
-    
-    const subMenus = menuHome && menuHome.sub_menus;
-    console.log(`subMenus: ${JSON.stringify(subMenus)}`);
+        setMenuHome(menu ? menu.data[0] : '');
+        console.log(`menuHome: ${JSON.stringify(menuHome)}`);
 
+        const subMenus = menuHome && menuHome.sub_menus;
+        console.log(`subMenus: ${JSON.stringify(subMenus)}`);
 
-    const subs = menuHome && menuHome.map((item, index) => {
-        return (
-            // <li className="{item.class_names}"><a href="{item.link_url}">{item.name}</a></li>
-            <li className="{item.class_names}">{item.name}</li>
-        );
-    });
+        const subs = subMenus && subMenus.map((item, index) => {
+            return (
+                // <li className="{item.class_names}"><a href="{item.link_url}">{item.name}</a></li>
+                <li className="{item.class_names}">{item.name}</li>
+            );
+        });
+        setSubMenus(subs);
+    },
+    // 페이지 호출 후 처음 한번만 호출될 수 있도록 [] 추가
+    []);
+
+    console.log(menu);
+
 
     return (
         <header className="header">
             <div className="gnb">
                 <div>
                     <ul>
-                        <li className="{menuHome.class_names}">{menuHome.name}</li>
-                        {subs}
+                        <li className={menuHome ? menuHome.class_names : ''}>{menuHome ? menuHome.name : 'aaa'}</li>
+                        {subMenus ? subMenus : 'bbb'}
+                        <li><a href='/logout'>Logout</a></li>
                     </ul>
+                </div>
+                <div>
+                    <p>{user.name}님!</p>
                 </div>
             </div>
         </header>
-        // <></>
     );
 }
 

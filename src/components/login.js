@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { setAuthToken, setRefreshToken } from '../storages/Cookie';
 import { Link } from 'react-router-dom';
 import axios from "axios";
+
 
 function Login() {
     const [inputEmail, setInputEmail] = useState('');
@@ -18,6 +20,14 @@ function Login() {
     const onClickLogin = () => {
         console.log('LOGIN...');
         console.log(`email: ${inputEmail}, password: ${inputPw}`);
+
+        // input validation
+        if (inputEmail === '' || inputPw === '') {
+            alert('Email 혹은 비밀번호의 입력값이 올바르지 않습니다.');
+            return;
+        }
+
+        // call login api
         axios.post('http://localhost:9000/api/v1/auth/login', {email: inputEmail, password: inputPw})
             .then(res => {
 
@@ -26,31 +36,38 @@ function Login() {
                 console.log(res.data.meta);
                 
 
-                if (res.data.error && !res.data.meta.isSuccess) {
-                    alert(res.data.error);
+                if (!res.data.meta.isSuccess) {
+                    alert(`error: ${JSON.stringify(res.data.error)}`);
                 } else {
                     const resData = res.data.data;
-                    const userRole = {
-                        seq: resData.role.seq,
-                        name: resData.role.role_name,
-                        name_display: resData.role.role_name_display
-                    };
-                    sessionStorage.setItem('email', resData.email);
-                    sessionStorage.setItem('name', resData.name);
-                    sessionStorage.setItem('role', userRole);
-                    sessionStorage.setItem('status', resData.status);
-                    sessionStorage.setItem('services', resData.services);
-                    sessionStorage.setItem('created_at', resData.created_at);
-                    sessionStorage.setItem('lat_modified_at', resData.last_modified_at);
+                    sessionStorage.setItem('user', {
+                        email: resData.email,
+                        name: resData.name,
+                        role: {
+                            seq: resData.role.seq,
+                            name: resData.role.role_name,
+                            name_display: resData.role.role_name_display
+                        },
+                        status: resData.status,
+                        services: resData.services,
+                        created_at: resData.created_at,
+                        lat_modified_at: resData.last_modified_at
+                    });
 
-                    localStorage.setItem('auth_token', resData.tokens.accessToken);
-                    localStorage.setItem('refresh_token', resData.tokens.refreshToken);
+                    setAuthToken(resData.tokens.accessToken);
+                    setRefreshToken(resData.tokens.refreshToken);
 
                     // 작업 완료 되면 페이지 이동(새로고침)
                     document.location.href = '/'
                 }
             })
-            .catch(err => alert(`err: ${err}`));
+            .catch(err => {
+                // console.log(`err: ${JSON.stringify(err)}`);
+                if (err.status === 404) {
+                    alert('!!');
+                }
+                // alert(`err: ${JSON.stringify(err)}`);
+            });
     };
 
     // 페이지 렌더링 후 가장 처음 호출되는 함수
@@ -81,7 +98,7 @@ function Login() {
             console.log('5');
         })
         .catch(err => {
-            alert(`err: ${JSON.stringify(err)}`);
+            console.log(`get /api/v1/users/me err: ${JSON.stringify(err)}`);
         });
     },
     // 페이지 호출 후 처음 한번만 호출될 수 있도록 [] 추가
@@ -92,7 +109,7 @@ function Login() {
             <h2>Login</h2>
             <div>
                 <label htmlFor='input_email'>ID : </label>
-                <input type='text' name='input_email' value={inputEmail} onChange={handleInputEmail} />
+                <input type='email' name='input_email' value={inputEmail} onChange={handleInputEmail} />
             </div>
             <div>
                 <label htmlFor='input_pw'>PW : </label>
