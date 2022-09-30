@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from "react";
-import { getAuthToken, getRefreshToken } from '../storages/Cookie';
+// import { getAuthToken, getRefreshToken } from '../storages/Cookie';
 import { useSetRecoilState } from "recoil";
 import { Link } from 'react-router-dom';
 import axios from "axios";
 
 function Header() {
 
-    console.log(`Header...${getAuthToken()}`);
+    // const cookieAuthToken = getAuthToken();
+    // console.log(`Cookie auth_token: ${cookieAuthToken}`);
 
-    const [authToken, setAuthToken] = useState(getAuthToken);
-    const [refreshToken, setRefreshToken] = useState(getRefreshToken);
-    const [user, setUser] = useState(sessionStorage.getItem('user'));
+    const sessionUser = localStorage.getItem('user');
+    console.log(`Session user: ${sessionUser}`);
+
+    // const [authToken, setAuthToken] = useState(getAuthToken);
+    // const [refreshToken, setRefreshToken] = useState(getRefreshToken);
+    const [user, setUser] = useState(null);
 
     const [menu, setMenu] = useState();
     const [menuHome, setMenuHome] = useState();
@@ -19,6 +23,7 @@ function Header() {
     // 페이지 렌더링 후 가장 처음 호출되는 함수
     useEffect(() => {
         console.log('EFFECT...');
+        setUser(JSON.parse(sessionUser));
 
         async function fetchData() {
             if (sessionStorage.getItem('menu')) {
@@ -26,12 +31,14 @@ function Header() {
             } else {
                 const result = await axios.get('http://localhost:9000/api/v1/menu',
                     {
-                        headers: {
-                            auth_token: authToken
-                        }
+                        // headers: {
+                        //     auth_token: authToken
+                        // }
                     }
                 );
                 setMenu(result.data);
+                //---
+
                 // sessionStorage.setItem('menu', result.data);
                 // console.log(`menu result : ${JSON.parse(sessionStorage.getItem('menu'))}`);
             }
@@ -53,9 +60,10 @@ function Header() {
         setSubMenus(subs);
     },
     // 페이지 호출 후 처음 한번만 호출될 수 있도록 [] 추가
-    []);
+    [
+    ]);
 
-    console.log(menu);
+
 
 
     return (
@@ -68,8 +76,11 @@ function Header() {
                         <li><a href='/logout'>Logout</a></li>
                     </ul>
                 </div>
+                <div>{typeof user + ''}</div>
                 <div>
-                    <p>{user.name}님!</p>
+
+                    {JSON.stringify(user)}
+                    <p>{!!user && user.name}님!</p>
                 </div>
             </div>
         </header>

@@ -1,45 +1,48 @@
-import { Cookies } from "react-cookie";
-const cookies = new Cookies();
+import cookie from "react-cookies";
 
 // refresh_token
-export const setRefreshToken = (refreshToken) => {
-    return cookies.set('refresh_token', refreshToken, {
-        sameSite: 'strict',
-        path: "/auth",
+export function setRefreshToken (refreshToken) {
+    console.log(`setRefreshToken token: ${refreshToken}`);
+    return cookie.set('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: true,
+        path: '/',
     });
 };
-export const getRefreshToken = () => {
-    return cookies.get('refresh_token');
-};
-export const removeRefreshToken = () => {
+// export function getRefreshToken () {
+//     console.log(`getRefreshToken`);
+//     return cookie.get('refresh_token');
+// };
+export function removeRefreshToken () {
     console.log('removeRefreshToken');
-    return cookies.remove('refresh_token', { sameSite: 'strict', path: "/auth" });
+    return cookie.remove('refresh_token', { httpOnly: true, secure: true, path: '/' });
 };
 
 // auth_token
-export const setAuthToken = (token) => {
-    console.log(`token: ${token}`);
-    return cookies.set('auth_token', token, {
-        sameSite: 'strict',
-        path: '/auth',
-        secure: true
+export function setAuthToken (token) {
+    console.log(`setAuthToken token: ${token}`);
+    return cookie.save('auth_token', token, {
+        httpOnly: true,
+        secure: true,
+        path: '/',
     });
 };
-export const getAuthToken = () => {
-    return cookies.get('auth_token');
-}
-export const removeAuthToken = () => {
+// export function getAuthToken () {
+//     console.log(`getAuthToken`);
+//     return cookie.get('auth_token');
+// }
+export function removeAuthToken () {
     console.log('removeAuthToken');
-    return cookies.remove('auth_token', { sameSite: 'strict', path: '/auth', secure: true });
+    return cookie.remove('auth_token', { httpOnly: true, secure: true, path: '/' });
 };
 
 // etc cookies
-export const setCookie = (name, value, option) => {
-    return cookies.set(name, value, {...option});
+export function setCookie (name, value, option) {
+    return cookie.save(name, value, {...option});
 }
-export const getCookie = (name) => {
-    return cookies.get(name);
+export function getCookie (name) {
+    return cookie.get(name);
 }
-export const removeCookie = (name) => {
-    return cookies.remove(name);
+export function removeCookie (name) {
+    return cookie.remove(name);
 }

@@ -7,6 +7,7 @@ import axios from "axios";
 function Login() {
     const [inputEmail, setInputEmail] = useState('');
     const [inputPw, setInputPw] = useState('');
+    const [authErrMsg, setAuthErrMsg] = useState('');
 
     // input data 의 변화가 있을 때마다 value 값을 변경해서 useState 해준다
     const handleInputEmail = (e) => {
@@ -17,18 +18,21 @@ function Login() {
     };
 
     // login 버튼 클릭 이벤트
-    const onClickLogin = () => {
+    const onClickLogin = async () => {
         console.log('LOGIN...');
         console.log(`email: ${inputEmail}, password: ${inputPw}`);
 
+        // init errMsg
+        // setAuthErrMsg('');
+
         // input validation
         if (inputEmail === '' || inputPw === '') {
-            alert('Email 혹은 비밀번호의 입력값이 올바르지 않습니다.');
+            setAuthErrMsg('Email 혹은 비밀번호의 입력값이 올바르지 않습니다.');
             return;
         }
 
         // call login api
-        axios.post('http://localhost:9000/api/v1/auth/login', {email: inputEmail, password: inputPw})
+        await axios.post('http://localhost:9000/api/v1/auth/login', {email: inputEmail, password: inputPw})
             .then(res => {
 
                 console.log(res.data);
@@ -40,7 +44,7 @@ function Login() {
                     alert(`error: ${JSON.stringify(res.data.error)}`);
                 } else {
                     const resData = res.data.data;
-                    sessionStorage.setItem('user', {
+                    const userJson = {
                         email: resData.email,
                         name: resData.name,
                         role: {
@@ -52,8 +56,10 @@ function Login() {
                         services: resData.services,
                         created_at: resData.created_at,
                         lat_modified_at: resData.last_modified_at
-                    });
+                    }
+                    localStorage.setItem('user', JSON.stringify(userJson));
 
+                    // cookie 에 token 저장
                     setAuthToken(resData.tokens.accessToken);
                     setRefreshToken(resData.tokens.refreshToken);
 
@@ -62,11 +68,12 @@ function Login() {
                 }
             })
             .catch(err => {
-                // console.log(`err: ${JSON.stringify(err)}`);
-                if (err.status === 404) {
-                    alert('!!');
+                console.log(`err: ${typeof err}`);
+                if (err.response.status === 401) {
+                    setAuthErrMsg('이메일 혹은 비밀번호가 올바르지 않습니다.');
+                } else {
+                    setAuthErrMsg('알 수 없는 오류가 발생했습니다.');
                 }
-                // alert(`err: ${JSON.stringify(err)}`);
             });
     };
 
@@ -109,7 +116,7 @@ function Login() {
             <h2>Login</h2>
             <div>
                 <label htmlFor='input_email'>ID : </label>
-                <input type='email' name='input_email' value={inputEmail} onChange={handleInputEmail} />
+                <input type='email' name='input_email' value={inputEmail} onChange={handleInputEmail} autoFocus={true} />
             </div>
             <div>
                 <label htmlFor='input_pw'>PW : </label>
@@ -117,6 +124,9 @@ function Login() {
             </div>
             <div>
                 <button type='button' onClick={onClickLogin}>Login</button>
+            </div>
+            <div>
+                <label>{authErrMsg}</label>
             </div>
         </div>
     );
