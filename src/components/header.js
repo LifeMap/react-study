@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 // import { getAuthToken, getRefreshToken } from '../storages/Cookie';
 import { useSetRecoilState } from "recoil";
 import { Link } from 'react-router-dom';
-import axios from "axios";
+import AxiosUtil from '../utils/axiosUtil';
+import cookieUtil from "../utils/cookieUtil";
 
 function Header() {
 
@@ -21,29 +22,40 @@ function Header() {
     const [subMenus, setSubMenus] = useState();
 
     // 페이지 렌더링 후 가장 처음 호출되는 함수
+    const getMenus = async() => {
+        const res = await AxiosUtil.fetch('get', '/api/v1/menu', cookieUtil.getAuthToken(), null, null);
+        return res;
+    };
+
     useEffect(() => {
         console.log('EFFECT...');
         setUser(JSON.parse(sessionUser));
 
-        async function fetchData() {
-            if (sessionStorage.getItem('menu')) {
-                setMenu(JSON.parse(sessionStorage.getItem('menu')));
-            } else {
-                const result = await axios.get('http://localhost:9000/api/v1/menu',
-                    {
-                        // headers: {
-                        //     auth_token: authToken
-                        // }
-                    }
-                );
-                setMenu(result.data);
-                //---
-
-                // sessionStorage.setItem('menu', result.data);
-                // console.log(`menu result : ${JSON.parse(sessionStorage.getItem('menu'))}`);
-            }
+        if (sessionStorage.getItem('menu')) {
+            setMenu(JSON.parse(sessionStorage.getItem('menu')));
+        } else {
+            const res = getMenus();
+            setMenu(result.data);
         }
-        fetchData();
+        // async function fetchData() {
+        //     if (sessionStorage.getItem('menu')) {
+        //         setMenu(JSON.parse(sessionStorage.getItem('menu')));
+        //     } else {
+        //         const result = await axios.get('http://localhost:9000/api/v1/menu',
+        //             {
+        //                 headers: {
+        //                     auth_token: authToken
+        //                 }
+        //             }
+        //         );
+        //         setMenu(result.data);
+        //         //---
+        //
+        //         // sessionStorage.setItem('menu', result.data);
+        //         // console.log(`menu result : ${JSON.parse(sessionStorage.getItem('menu'))}`);
+        //     }
+        // }
+        // fetchData();
 
         setMenuHome(menu ? menu.data[0] : '');
         console.log(`menuHome: ${JSON.stringify(menuHome)}`);
